@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+// Контракт внутрішнього мікросервісу обробки медіафайлів.
+// Файл є єдиним джерелом правди (Single Source of Truth) для сервера й клієнта:
+// з нього генеруються Go-структури, клієнтські стаби та серверні інтерфейси.
+package media;
+
+option go_package = "media-service/proto;mediapb";
+
+// Підтримувані цільові формати конвертації медіа.
+// Перше значення enum у proto3 зобов'язане мати індекс 0 і позначає
+// "не задано" (zero value), щоб поле можна було відрізнити від явно вибраного.
+enum MediaFormat {
+  MEDIA_FORMAT_UNSPECIFIED = 0;
+  MEDIA_FORMAT_PNG = 1;
+  MEDIA_FORMAT_JPEG = 2;
+  MEDIA_FORMAT_WEBP = 3;
+  MEDIA_FORMAT_MP4 = 4;
+}
+
+// Запит на реєстрацію нового завдання обробки медіа.
+message ProcessMediaRequest {
+  string client_id = 1;       // унікальний ідентифікатор сервісу-клієнта
+  string filename = 2;        // ім'я вхідного файлу
+  MediaFormat target_format = 3; // цільовий формат конвертації
+  int32 quality_level = 4;    // бажаний рівень якості/компресії, 1..100
+}
+
+// Відповідь на реєстрацію завдання.
+message JobResponse {
+  string job_id = 1;   // згенерований UUID завдання
+  string status = 2;   // початковий статус (QUEUED)
+  int64 created_at = 3; // Unix timestamp реєстрації
+}
+
+// Запит поточного стану завдання (використовується і як аргумент стріму).
+message GetJobStatusRequest {
+  string job_id = 1;
+}
+
+// Відповідь із поточним станом завдання.
+message JobStatusResponse {
+  string job_id = 1;
+  string status = 2;           // QUEUED | PROCESSING | COMPLETED | CANCELED
+  int32 progress_percent = 3;  // 0..100
+  int64 completed_at = 4;      // Unix timestamp завершення (0 — ще не завершено)
+}
+
+// Одне повідомлення потоку прогресу (Server Streaming).
+message ProgressUpdate {
+  string job_id = 1;
+  string current_stage = 2;  // назва поточної технологічної стадії
+  int32 progress_percent = 3; // 0..100
+  bool is_completed = 4;     // ознака завершення обробки
+}
+
+// Сервіс обробки медіафайлів.
+service MediaService {
+  // Реєструє завдання та повертає його ідентифікатор (Unary RPC).
+  rpc SubmitJob(ProcessMediaRequest) returns (JobResponse);
+
+  // Повертає поточний стан завдання (Unary RPC).
+  rpc GetJobStatus(GetJobStatusRequest) returns (JobStatusResponse);
+
+  // Транслює прогрес обробки у реальному часі (Server Streaming RPC).
+  rpc TrackProgress(GetJobStatusRequest) returns (stream ProgressUpdate);
+}

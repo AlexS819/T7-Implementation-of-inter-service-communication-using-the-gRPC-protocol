@@ -1,0 +1,10 @@
+# Нормалізація кінців рядків між платформами
+* text=auto
+
+# Bash-скрипти мають залишатися з LF, інакше вони не запускаються
+*.sh text eol=lf
+*.proto text eol=lf
+
+# PowerShell-скрипти — CRLF (рідний формат Windows)
+*.ps1 text eol=crlf
+*.bat text eol=crlf

@@ -1,0 +1,38 @@
+# ---- Go ----
+# Скомпільовані бінарники
+/bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+media-service
+*.test
+*.out
+coverage.*
+
+# Локальні кеші інструментів (не частина репозиторію)
+_tools/
+.gocache/
+.gomodcache/
+
+# Логи та тимчасові файли
+*.log
+tmp/
+
+# ---- IDE / редактори ----
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ---- ОС ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Секрети та локальна конфігурація ----
+.env
+.env.local
